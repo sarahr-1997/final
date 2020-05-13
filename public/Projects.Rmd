@@ -1,11 +1,12 @@
 ---
 title: "Projects"
 output: html_document
+showpagemeta: false
 ---
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
+- [Exploratory Data Analysis with Tidyverse Tools][Project 1](/project1.Rmd)
 
-[Project 1](/project1.Rmd)
-[Project 2](/project2.Rmd)
+- [Modeling, Testing, and Classification][Project 2](/project2.Rmd)
