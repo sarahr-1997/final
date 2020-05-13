@@ -13,7 +13,11 @@ library(reticulate)
 ```
 
 ```{python}
-
+import numpy as np 
+a=np.array(range(10)) 
+a
+a**2
+np.concatenate([a,a**2])
 ```
 
 
