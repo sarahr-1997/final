@@ -1,0 +1,10 @@
+---
+title: Python
+author: Sarah Roytek
+date: '2020-05-13'
+slug: python
+categories: []
+tags: []
+description: ''
+---
+Add at least one actual blog post about the python stuff we have been working on: this can be anything, but must include some python code that executes in a python code chunk (i.e.,{python} #your code) and includes output (can even be examples from hw assignments, etc). You are encouraged to use reticulate to let R and Python talk to each other in chunks! That way you can do it straight from R markdown in python code chunks. Also, it must include at least one local image from static/img/. You can include images in various ways, including ![](image.png) or <img src="image.png">, or using the insert image feature in the toolbar.
