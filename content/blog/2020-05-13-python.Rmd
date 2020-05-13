@@ -24,5 +24,3 @@ np.concatenate([a,a**2])
 Add at least one actual blog post about the python stuff we have been working on: this can be anything, but must include some python code that executes in a python code chunk (i.e.,{python} #your code) and includes output (can even be examples from hw assignments, etc). 
 
 Also, it must include at least one local image from static/img/. You can include images in various ways, including ![](image.png) or <img src="image.png">, or using the insert image feature in the toolbar.
-
-{python}
