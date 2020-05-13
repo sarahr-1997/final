@@ -1,0 +1,356 @@
+---
+title: 'Project 2: Modeling, Testing, and Predicting'
+author: "Sarah Roytek (ssr894)"
+date: ''
+output:
+  pdf_document:
+    toc: yes
+  html_document:
+    toc: yes
+    toc_float:
+      collapsed: no
+      smooth_scroll: yes
+---
+
+
+
+<pre class="r"><code>library(carData)
+Arrests &lt;- Arrests
+head(Arrests)</code></pre>
+<pre><code>##   released colour year age    sex employed citizen checks
+## 1      Yes  White 2002  21   Male      Yes     Yes      3
+## 2       No  Black 1999  17   Male      Yes     Yes      3
+## 3      Yes  White 2000  24   Male      Yes     Yes      3
+## 4       No  Black 2000  46   Male      Yes     Yes      1
+## 5      Yes  Black 1999  27 Female      Yes     Yes      1
+## 6      Yes  Black 1998  16 Female      Yes     Yes      0</code></pre>
+<p>My dataset is called ‘Arrests’ and is from the ‘carData’ package. It features data on police treatment of individuals arrested in Toronto for simple possession of small quantities of marijuana. The dataset has 5,226 observations of 8 different variables. The ‘released’ variable tells whether the arrestee was released with a summons; it is a binary variable with levels ‘No’ and ‘Yes’. The ‘colour’ variable is the arrestee’s race; it is a binary variable with levels ‘Black’ and ‘White’. The ‘year’ variable is numeric and ranges from 1997 to 2002, indicating the year of the arrest. The ‘age’ variable is numeric and indicates the age of the arrestee (in years). The ‘sex’ variable is the arrestee’s gender; it is a binary variable with levels ‘Female’ and ‘Male’. The ‘employed’ variable tells whether the arrestee was employed at the time of arrest; it is a binary variable with levels ‘No’ and ‘Yes’. The ‘citizen’ variable tells whether the arrestee was a citizen at the time of arrest; it is a binary variable with levels ‘No’ and ‘Yes’. The ‘checks’ variable is numeric and is the number of police databases (of previous arrests, previous convictions, parole status, etc.- 6 in all) on which the arrestee’s name appeared.</p>
+<pre class="r"><code>#assumptions
+ggplot(Arrests, aes(x = age, y = checks)) +
+  geom_point(alpha = .5) + geom_density_2d(h=2) + facet_wrap(~sex)</code></pre>
+<p><img src="/project2_files/figure-html/unnamed-chunk-2-1.png" width="768" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>library(car)
+leveneTest(age + checks ~ sex, Arrests, center=mean)</code></pre>
+<pre><code>## Levene&#39;s Test for Homogeneity of Variance (center =
+mean)
+## Df F value Pr(&gt;F)
+## group 1 4.4511 0.03493 *
+## 5224
+## ---
+## Signif. codes: 0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1
+&#39; &#39; 1</code></pre>
+<pre class="r"><code>#MANOVA
+man1&lt;-manova(cbind(age, checks)~sex, data=Arrests)
+summary(man1)</code></pre>
+<pre><code>## Df Pillai approx F num Df den Df Pr(&gt;F)
+## sex 1 0.011576 30.584 2 5223 6.235e-14 ***
+## Residuals 5224
+## ---
+## Signif. codes: 0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1
+&#39; &#39; 1</code></pre>
+<pre class="r"><code>#ANOVAs
+summary.aov(man1)</code></pre>
+<pre><code>## Response age :
+## Df Sum Sq Mean Sq F value Pr(&gt;F)
+## sex 1 48 47.664 0.6892 0.4065
+## Residuals 5224 361303 69.162
+##
+## Response checks :
+## Df Sum Sq Mean Sq F value Pr(&gt;F)
+## sex 1 143.2 143.180 61.129 6.421e-15 ***
+## Residuals 5224 12236.0 2.342
+## ---
+## Signif. codes: 0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1
+&#39; &#39; 1</code></pre>
+<pre class="r"><code>#Post-hoc t-test
+Arrests%&gt;%group_by(sex)%&gt;%summarize(mean(age),mean(checks))</code></pre>
+<pre><code>## # A tibble: 2 x 3
+##   sex    `mean(age)` `mean(checks)`
+##   &lt;fct&gt;        &lt;dbl&gt;          &lt;dbl&gt;
+## 1 Female        23.5           1.09
+## 2 Male          23.9           1.69</code></pre>
+<pre class="r"><code>pairwise.t.test(Arrests$checks, Arrests$sex, p.adj = &quot;none&quot;)</code></pre>
+<pre><code>## 
+##  Pairwise comparisons using t tests with pooled SD 
+## 
+## data:  Arrests$checks and Arrests$sex 
+## 
+##      Female 
+## Male 6.4e-15
+## 
+## P value adjustment method: none</code></pre>
+<pre class="r"><code>.05/4</code></pre>
+<pre><code>## [1] 0.0125</code></pre>
+<pre class="r"><code>1-(.95^4)</code></pre>
+<pre><code>## [1] 0.1854938</code></pre>
+<p>I used MANOVA to determine the effect of sex (‘Female’ or’ Male’) on two dependent variables (age at the time of arrest and number of checks differed by sex).</p>
+<p>There are many MANOVA assumptions, but first I started with the assumption of multivariate normality. I made bivariate density plots of response variables for each gender. Neither of the bivariate density plots were circular or ovoid, meaning that assumption was not met. Next, I checked the assumption of homogeneity of variances using Levene’s test. The assumption wasn’t met since the p-value was less than .05. Although the assumptions were not met, I continued with the MANOVA test.</p>
+<p>The null hypothesis for my MANOVA was that for both dependent variables, means for each gender are equal. My alternative hypothesis was that for at least one DV, at least one gender mean is different. The overall MANOVA was significant (p-value: 6.235e-14) meaning that significant differences were found among the genders for at least one of the DV. I performed follow-up one-way ANOVAs for each variable to see which were significant, and I ran a post-hoc t-test. I used the Bonferroni method for controlling Type 1 error rates for multiple comparisons. Since I ran 1 MANOVA, 2 ANOVAs, and 1 t-test (4 tests total) the value I used to test for significance was 0.0125 instead of 0.05. I calculated the probability of at least one type 1 error to be 0.1855 (if unadjusted). From performing the ANOVAs, I determined that age (p-value: 0.407) is not significant but checks is (p-value: 6.421e-15). For checks, gender means differ. The post-hoc t-test was to check if ‘checks’ really differed for sex. The test was significant (p-value: 6.4e-15) so ‘male’ and ‘female’ significantly differ for ‘charges’.</p>
+<pre class="r"><code>ggplot(Arrests,aes(checks,fill=released))+geom_histogram(bins=6.5)+facet_wrap(~released)</code></pre>
+<p><img src="/project2_files/figure-html/unnamed-chunk-3-1.png" width="768" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>Arrests %&gt;% group_by(released) %&gt;% summarize(means=mean(checks))%&gt;%summarize(`mean_diff:`=diff(means))</code></pre>
+<pre><code>## # A tibble: 1 x 1
+##   `mean_diff:`
+##          &lt;dbl&gt;
+## 1        -1.02</code></pre>
+<pre class="r"><code>rand_dist&lt;-vector()
+for(i in 1:5000){
+new&lt;-data.frame(checks=sample(Arrests$checks),Released=Arrests$released)
+rand_dist[i]&lt;-mean(new[new$Released==&quot;Yes&quot;,]$checks)-
+              mean(new[new$Released==&quot;No&quot;,]$checks)}
+hist(rand_dist,main=&quot;&quot;,ylab=&quot;&quot;); abline(v = -1.021024,col=&quot;red&quot;)</code></pre>
+<p><img src="/project2_files/figure-html/unnamed-chunk-3-2.png" width="768" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>mean(rand_dist&gt;1.021024 | rand_dist&lt; -1.021024)</code></pre>
+<pre><code>## [1] 0</code></pre>
+<p>I performed a randomization test on my data. The null hypothesis was that number of checks is the same for arrestees released and arrestees not released. The alternative hypothesis was that number of checks is different for arrestees released and arrestees not released. I created a plot visualizing the null distribution and the test statistic. The P-value calculated corresponds to the probability of observing a mean difference as extreme as the one observed in the original data under this “randomization distribution”. I computed the two-tailed p-value to be 0, and I rejected the null hypothesis. The number of checks is different for arrestees released and arrestees not released.</p>
+<pre class="r"><code>library(lmtest)
+library(car)
+agecen &lt;-Arrests$age - mean(Arrests$age, na.rm=T)
+fit&lt;-lm(checks~colour*agecen,data=Arrests)
+summary(fit)</code></pre>
+<pre><code>##
+## Call:
+## lm(formula = checks ~ colour * agecen, data = Arrests)
+##
+## Residuals:
+## Min 1Q Median 3Q Max
+## -2.5071 -1.3302 -0.3021 1.1654 4.1374
+##
+## Coefficients:
+## Estimate Std. Error t value Pr(&gt;|t|)
+## (Intercept) 2.090681 0.042152 49.598 &lt; 2e-16 ***
+## colourWhite -0.596692 0.048491 -12.305 &lt; 2e-16 ***
+## agecen 0.008887 0.004873 1.824 0.068276 .
+## colourWhite:agecen 0.019136 0.005682 3.368 0.000764 ***
+## ---
+## Signif. codes: 0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1
+&#39; &#39; 1
+##
+## Residual standard error: 1.503 on 5222 degrees of
+freedom
+## Multiple R-squared: 0.04698, Adjusted R-squared: 0.04644
+## F-statistic: 85.81 on 3 and 5222 DF, p-value: &lt; 2.2e-16</code></pre>
+<pre class="r"><code>Arrests%&gt;%ggplot(aes(age,checks))+geom_point()+geom_smooth(method = &#39;lm&#39;,se=F)</code></pre>
+<p><img src="/project2_files/figure-html/unnamed-chunk-4-1.png" width="768" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>#assumptions
+scatterplot(checks ~ age | colour, data=Arrests,
+   xlab=&quot;Age of Arrestee&quot;, ylab=&quot;Number of Checks&quot;,
+   main=&quot;Scatter Plot&quot;)</code></pre>
+<p><img src="/project2_files/figure-html/unnamed-chunk-4-2.png" width="768" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>resids&lt;-fit$residuals
+fitvals&lt;-fit$fitted.values
+ggplot()+geom_point(aes(fitvals,resids))+geom_hline(yintercept=0, color=&#39;red&#39;)</code></pre>
+<p><img src="/project2_files/figure-html/unnamed-chunk-4-3.png" width="768" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>bptest(checks~colour*agecen,data=Arrests)</code></pre>
+<pre><code>## 
+##  studentized Breusch-Pagan test
+## 
+## data:  checks ~ colour * agecen
+## BP = 8.2294, df = 3, p-value = 0.0415</code></pre>
+<pre class="r"><code>ks.test(resids, &quot;pnorm&quot;, mean=0, sd(resids))</code></pre>
+<pre><code>## 
+##  One-sample Kolmogorov-Smirnov test
+## 
+## data:  resids
+## D = 0.15111, p-value &lt; 2.2e-16
+## alternative hypothesis: two-sided</code></pre>
+<pre class="r"><code>library(sandwich)
+coeftest(fit, vcov = vcovHC(fit))[,1:4]</code></pre>
+<pre><code>## Estimate Std. Error t value Pr(&gt;|t|)
+## (Intercept) 2.090680559 0.043082544 48.527324
+0.000000e+00
+## colourWhite -0.596691908 0.049258504 -12.113480
+2.499285e-33
+## agecen 0.008886958 0.004761078 1.866585 6.201556e-02
+## colourWhite:agecen 0.019135889 0.005584140 3.426828
+6.153877e-04</code></pre>
+<p>I built a linear regression model predicting the number of checks from arrestee color and age. I made sure to mean-center the age variable. I also plotted the regression using ggplot(), but I did not include the ‘colour’ variable.</p>
+<p>The average number of checks when no variables are considered is 2.091. For arrestees with an average age, white individuals have an average/predicted number of checks that is 0.597 less than black individuals, difference is significant (b = -0.597, t = -12.305, p = &lt; 2e-16). For every 1 unit increase in age, number of checks increase by 0.0089 (b = 0.0089, t = 1.824, p = 0.068276). The interaction term is also the difference in slopes. The slope for Whites and Blacks are significantly different (b = 0.019, t = 3.368, p = 0.000764); it is 0.019 greater for whites.</p>
+<p>Next, I checked assumptions of linearity, normality, and homoskedasticity. I made a scatter plot using ggplot() to test linearity. The fit lines showed some curviness, meaning the assumption of linearity was not met. I made a ggplot of the residuals against the fitted values to check homoskedasticity. The graph looked very weird and proved that there was not equal variance of the residuals along the regression line. To confirm that homoskedasticity was not upheld, I ran a Breuch-Pagan test and rejected (p: 0.041) the null hypothesis (homoskedasticity). The normality assumption was also not met. I did a Kolmogorov-Smirnow (KS) test and rejected (p: &lt; 2.2e-16) the null hypothesis, that the residuals are normally distributed.</p>
+<p>I recomputed regression results with robust standard errors via coeftest(…, vcov=vcovHC(…)). None of the coefficient estimates changed. The std. errors and t-values slightly changed. All of the p-values got smaller which means that the results increased in significancy. The proportion of variation in the response variable explained by my overall model was 0.047.</p>
+<pre class="r"><code>#bootstrapped SE (resampling rows)
+samp_distn&lt;-replicate(5000, {
+  boot_dat &lt;- sample_frac(Arrests, replace=T) 
+  fit &lt;- lm(checks~colour*agecen, data=boot_dat) 
+  coef(fit) #save coefs
+})
+samp_distn %&gt;% t %&gt;% as.data.frame %&gt;% summarize_all(sd)</code></pre>
+<pre><code>##   (Intercept) colourWhite      agecen colourWhite:agecen
+## 1  0.04295999  0.04821957 0.005021294         0.00583733</code></pre>
+<pre class="r"><code>#bootstrapped SE (resampling residuals)
+fit&lt;-lm(checks~colour*agecen,data=Arrests)
+resids&lt;-fit$residuals 
+fitted&lt;-fit$fitted.values
+resid_resamp&lt;-replicate(5000,{
+    new_resids&lt;-sample(resids,replace=TRUE) 
+    Arrests$new_y&lt;-fitted+new_resids 
+    fit&lt;-lm(new_y~colour*agecen,data=Arrests) 
+    coef(fit) 
+})
+resid_resamp%&gt;%t%&gt;%as.data.frame%&gt;%summarize_all(sd)</code></pre>
+<pre><code>##   (Intercept) colourWhite      agecen colourWhite:agecen
+## 1   0.0423209  0.04860895 0.004865428        0.005641604</code></pre>
+<pre class="r"><code>coeftest(fit)[,1:2]</code></pre>
+<pre><code>##                        Estimate  Std. Error
+## (Intercept)         2.090680559 0.042152099
+## colourWhite        -0.596691908 0.048490925
+## agecen              0.008886958 0.004873423
+## colourWhite:agecen  0.019135889 0.005682324</code></pre>
+<pre class="r"><code>coeftest(fit, vcov=vcovHC(fit))[,1:2]</code></pre>
+<pre><code>##                        Estimate  Std. Error
+## (Intercept)         2.090680559 0.043082544
+## colourWhite        -0.596691908 0.049258504
+## agecen              0.008886958 0.004761078
+## colourWhite:agecen  0.019135889 0.005584140</code></pre>
+<p>I reran the same regression model and computed bootstrapped standard errors. I calculated two different sets of boostrapped standard errors, one by resampled rows and one by resampled residuals. All of the robust SEs were greater than the original SEs minus the ‘agecen’ SE. The bootstrapped standard errors calculated by resampling residuals were all less than the boostrapped standard errors calculated by resampling rows. The bootstrapped standard errors calculated by resampling residuals were very close to the original SEs.</p>
+<pre class="r"><code>data&lt;-Arrests%&gt;%mutate(y=ifelse(released==&quot;Yes&quot;,1,0))
+fit2&lt;-glm(y~colour+citizen,data=data,family=binomial(link=&quot;logit&quot;))
+coeftest(fit2)</code></pre>
+<pre><code>##
+## z test of coefficients:
+##
+## Estimate Std. Error z value Pr(&gt;|z|)
+## (Intercept) 0.658731 0.089319 7.3750 1.643e-13 ***
+## colourWhite 0.636550 0.080892 7.8691 3.571e-15 ***
+## citizenYes 0.574182 0.094086 6.1028 1.043e-09 ***
+## ---
+## Signif. codes: 0 &#39;***&#39; 0.001 &#39;**&#39; 0.01 &#39;*&#39; 0.05 &#39;.&#39; 0.1
+&#39; &#39; 1</code></pre>
+<pre class="r"><code>exp(0.658731)</code></pre>
+<pre><code>## [1] 1.932339</code></pre>
+<pre class="r"><code>exp(0.636550)</code></pre>
+<pre><code>## [1] 1.889949</code></pre>
+<pre class="r"><code>exp(0.636550+0.658731)</code></pre>
+<pre><code>## [1] 3.652022</code></pre>
+<pre class="r"><code>exp(0.574182)</code></pre>
+<pre><code>## [1] 1.775677</code></pre>
+<pre class="r"><code>exp(0.574182+0.658731)</code></pre>
+<pre><code>## [1] 3.43121</code></pre>
+<pre class="r"><code>exp(3.294003)</code></pre>
+<pre><code>## [1] 26.95053</code></pre>
+<pre class="r"><code>#confusion matrix
+prob&lt;-predict(fit2,type=&quot;response&quot;)
+pred&lt;-ifelse(prob&gt;.5,1,0)
+table(predict=pred,truth=data$y)%&gt;%addmargins</code></pre>
+<pre><code>##        truth
+## predict    0    1  Sum
+##     1    892 4334 5226
+##     Sum  892 4334 5226</code></pre>
+<pre class="r"><code>(0+4334)/5226 # accuracy</code></pre>
+<pre><code>## [1] 0.829315</code></pre>
+<pre class="r"><code>(4334)/5226 #tnr</code></pre>
+<pre><code>## [1] 0.829315</code></pre>
+<pre class="r"><code>0/0 #tpr</code></pre>
+<pre><code>## [1] NaN</code></pre>
+<pre class="r"><code>892/892 #ppv</code></pre>
+<pre><code>## [1] 1</code></pre>
+<pre class="r"><code>#DENSITY PLOT
+data$logit&lt;-predict(fit2,type=&quot;link&quot;)
+data%&gt;%ggplot()+geom_density(aes(logit,color=released,fill=released), alpha=.4)+
+  theme(legend.position=c(.85,.85))+geom_vline(xintercept=0)+xlab(&quot;logit (log-odds)&quot;)+
+  geom_rug(aes(logit,color=released))+
+  geom_text(x=-5,y=.07,label=&quot;TN = 431&quot;)+
+  geom_text(x=-1.75,y=.008,label=&quot;FN = 19&quot;)+
+  geom_text(x=1,y=.006,label=&quot;FP = 13&quot;)+
+  geom_text(x=5,y=.04,label=&quot;TP = 220&quot;)</code></pre>
+<p><img src="/project2_files/figure-html/unnamed-chunk-6-1.png" width="768" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>#ROC CURVE AND AUC
+library(plotROC)
+ROCplot2&lt;-ggplot(data,aes(d=y,m=prob))+geom_roc()
+ROCplot2</code></pre>
+<p><img src="/project2_files/figure-html/unnamed-chunk-6-2.png" width="768" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>calc_auc(ROCplot2)</code></pre>
+<pre><code>##   PANEL group       AUC
+## 1     1    -1 0.5959176</code></pre>
+<pre class="r"><code>#AUC
+class_diag &lt;- function(probs,truth){
+  #CONFUSION MATRIX: CALCULATE ACCURACY, TPR, TNR, PPV
+  tab&lt;-table(factor(probs&gt;.5,levels=c(&quot;FALSE&quot;,&quot;TRUE&quot;)),truth)
+  acc=sum(diag(tab))/sum(tab)
+  sens=tab[2,2]/colSums(tab)[2]
+  spec=tab[1,1]/colSums(tab)[1]
+  ppv=tab[2,2]/rowSums(tab)[2]
+  if(is.numeric(truth)==FALSE &amp; is.logical(truth)==FALSE) truth&lt;-as.numeric(truth)-1
+    #CALCULATE EXACT AUC
+  ord&lt;-order(probs, decreasing=TRUE)
+  probs &lt;- probs[ord]; truth &lt;- truth[ord]
+  TPR=cumsum(truth)/max(1,sum(truth))
+  FPR=cumsum(!truth)/max(1,sum(!truth))
+  dup&lt;-c(probs[-1]&gt;=probs[-length(probs)], FALSE)
+  TPR&lt;-c(0,TPR[!dup],1); FPR&lt;-c(0,FPR[!dup],1)
+  n &lt;- length(TPR)
+  auc&lt;- sum( ((TPR[-1]+TPR[-n])/2) * (FPR[-1]-FPR[-n]) )
+  data.frame(acc,sens,spec,ppv,auc)
+}
+class_diag(prob, data$y)</code></pre>
+<pre><code>##        acc sens spec      ppv       auc
+## 1 0.829315    1    0 0.829315 0.5959176</code></pre>
+<pre class="r"><code>set.seed(1234)
+k=10 #choose number of folds
+data&lt;-data[sample(nrow(data)),] #randomly order rows
+folds&lt;-cut(seq(1:nrow(data)),breaks=k,labels=F) #create folds
+diags&lt;-NULL
+for(i in 1:k){
+  ## Create training and test sets
+  train&lt;-data[folds!=i,]
+  test&lt;-data[folds==i,]
+  truth&lt;-test$y ## Truth labels for fold i
+  ## Train model on training set (all but fold i)
+  fit&lt;-glm(y~colour+citizen,data=train,family=&quot;binomial&quot;)
+  ## Test model on test set (fold i)
+  probs&lt;-predict(fit,newdata = test,type=&quot;response&quot;)
+  ## Get diagnostics for fold i
+  diags&lt;-rbind(diags,class_diag(probs,truth))
+}
+summarize_all(diags,mean)</code></pre>
+<pre><code>##         acc sens spec       ppv       auc
+## 1 0.8293107    1    0 0.8293107 0.5954284</code></pre>
+<p>I built a logistic regression model predicting whether the arrestee was released after arrest from the arrestee’s color and citizenship.</p>
+<p>Being white (colour=‘White’) and being a citizen (citizen=‘Yes’) increases log-odds of being released (makes it more likely). The characteristic of being white multiplies odds by 1.890. Being a citizen multiplies the odds by 1.776. The odds of being released if the arrestee is black and not a citizen is 1.932. The odds of being released if the arrestee is white is 3.652. The odds of being released if the arrestee is a citizen is 3.431.</p>
+<p>Next, I computed a confusion matrix for the logistic regression. The matrix showed only predicted positive (i.e., no predicted probabilities under .5). The accuracy was 0.829, the specificity (TNR) was 0.829, the sensitivity (TPR) can’t be calculated (since the denominator would be 0), and the precision (PPV) is 1.</p>
+<p>Using ggplot(), I plotted the density of log-odds by ‘released’ (the binary outcome variable). Logit &gt; 0 means we predict ‘released’. This means that all arrestees are predicted to be ‘released’ from the variables in the logistic regression. This plot shows how different the predicted and the observed outcomes are. I generated a ROC curve using ggplot() and calculated AUC to be 0.596. The AUC is bad. The trade-off between sensitivity and specificity is extreme!</p>
+<p>Finally, I performed a 10-fold CV. The reported accuracy was 0.829, sensitivity was 1, specificity was 0, ppt was 0.829, and acc was 0.596. The performance (AUC) out-of-sample was very similar to the performance in sample (calculated previously).</p>
+<pre class="r"><code>library(glmnet)
+y&lt;-as.matrix(Arrests$released)
+x&lt;-model.matrix(released~.,data=Arrests)[,-1]
+head(x)</code></pre>
+<pre><code>## colourWhite year age sexMale employedYes citizenYes
+checks
+## 1 1 2002 21 1 1 1 3
+## 2 0 1999 17 1 1 1 3
+## 3 1 2000 24 1 1 1 3
+## 4 0 2000 46 1 1 1 1
+## 5 0 1999 27 0 1 1 1
+## 6 0 1998 16 0 1 1 0</code></pre>
+<pre class="r"><code>x &lt;- scale(x)
+cv&lt;-cv.glmnet(x,y,family=&quot;binomial&quot;)
+lasso&lt;-glmnet(x,y,family=&quot;binomial&quot;,lambda=cv$lambda.1se)
+coef(lasso)</code></pre>
+<pre><code>## 8 x 1 sparse Matrix of class &quot;dgCMatrix&quot;
+##                      s0
+## (Intercept)  1.67842020
+## colourWhite  0.06897502
+## year         .         
+## age          .         
+## sexMale      .         
+## employedYes  0.21127401
+## citizenYes   0.08635901
+## checks      -0.42202991</code></pre>
+<pre class="r"><code>set.seed(1234)
+k=10
+data &lt;- data %&gt;% sample_frac #put rows of dataset in random order
+folds &lt;- ntile(1:nrow(data),n=10) #create fold labels
+diags&lt;-NULL
+for(i in 1:k){
+  train &lt;- data[folds!=i,] #create training set (all but fold i)
+  test &lt;- data[folds==i,] #create test set (just fold i)
+  truth &lt;- test$released #save truth labels from fold i
+  fit &lt;- glm(released~colour+employed+citizen+checks,
+             data=train, family=&quot;binomial&quot;)
+  probs &lt;- predict(fit, newdata=test, type=&quot;response&quot;)
+  diags&lt;-rbind(diags,class_diag(probs,truth))
+}
+diags%&gt;%summarize_all(mean)</code></pre>
+<pre><code>##         acc      sens      spec       ppv       auc
+## 1 0.8279748 0.9856489 0.0613653 0.8361354 0.7226567</code></pre>
+<p>Colour, employment, citizenship, and checks are the most predictive variables for being released after arrest. I performed a 10-fold CV using a logistic regression model and these variables. The response variable (‘regression’) is binary so I compared the model’s out-of-sample accuracy to that of my logistic regression above. The AUC for this CV is 0.724 which is much better than the AUC from above. This CV performance is the best yet for predicting released. The original model must have been overfitting.</p>

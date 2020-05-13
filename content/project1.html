@@ -1,0 +1,145 @@
+---
+title: 'Project 1: Exploratory Data Analysis'
+date: "03/03/2020"
+author: "Sarah Roytek (ssr894)"
+output:
+  pdf_document: default
+  html_document: default
+---
+
+
+
+<p>Using the online demographic research tool ‘Social Explorer’, I gathered data relating to health and demographics for Texas counties in 2017. For each dataset, I chose data pertaining to the first 53 counties in Texas. I originally wanted to look at data from all of the 254 counties in Texas, but I quickly realized that was too much data for this project. In an effort to eliminate bias in choosing which counties to look at, I came up with the idea of choosing the first 53 counties after ordering them alphabetically. The first dataset I chose, ‘demo’, includes ‘White Only’, ‘Black or African American Only’, and ‘Median Household Income (in 2017 Inflation Injusted Dollars)’ variables. This data was originally obtained by Social Explorer from the US census bureau. The ‘White Only’ and ‘Black or African American Only’ variables are reported as proportions of total population. I realize that there are many different races, but for the sake of my project, I was paticularly interested in looking at disparities between these two specific races. The ‘Median Income’ is self-explanatory and gives the median income per household in each county. The second dataset I chose, ‘health’, includes the variables ‘Persons with Limited Access to Healthy Foods’, ‘Obese Persons (20 Years and Older)’, and ‘Children Eligible for Free Lunch (Persons &lt;18 Years)’. The data from this dataset was obtained by Social Explorer from the County Health Rankings &amp; Roadmaps program (2010 - 2017). Each variable is reported as a proportion of the total population in the county. My goal in this project was to look at the health disparities between communities of different racial profiles and how median household income impacted that.</p>
+<p>As I was thinking about the variables and potential associations, I expected to see a correlation between ‘median income’ and each variable in the ‘health’ dataset. In terms of the ‘White Only’ and ‘Black or African American Only’ variables, I wasn’t sure what their associations would be with the other variables.</p>
+<pre class="r"><code>demo1 &lt;- read_excel(&quot;demo.xlsx&quot;)
+health1 &lt;- read_excel(&quot;health.xlsx&quot;)
+Demo1 &lt;- demo1 %&gt;% pivot_longer(c(&quot;White Alone&quot;, &quot;Black or African American Alone&quot;, 
+    &quot;Median Household Income (In 2017 Inflation Adjusted Dollars)&quot;), 
+    names_to = &quot;Situation&quot;, values_to = &quot;Value&quot;)
+Demo &lt;- Demo1 %&gt;% pivot_wider(names_from = &quot;Situation&quot;, values_from = &quot;Value&quot;)
+Health1 &lt;- health1 %&gt;% pivot_longer(c(&quot;Persons with Limited Access to Healthy Foods&quot;, 
+    &quot;Obese Persons (20 Years and Over)&quot;, &quot;Children Eligible for Free Lunch (Persons &lt; 18 Years)&quot;), 
+    names_to = &quot;Situation&quot;, values_to = &quot;Value&quot;)
+Health &lt;- Health1 %&gt;% pivot_wider(names_from = &quot;Situation&quot;, values_from = &quot;Value&quot;)
+Final &lt;- full_join(Demo, Health, by = &quot;County&quot;)</code></pre>
+<p>Prior to joining the datasets, I applied pivot_longer and pivor_wider to each set since they were already tidy (to untidy and retidy them). I chose a full join because I wanted all of the rows and columns from both datasets to be preserved. No cases from either dataset were dropped. I named the joined dataset ‘Final’.</p>
+<pre class="r"><code>Final &lt;- Final %&gt;% rename(County = County, White = &quot;White Alone&quot;, 
+    Black = `Black or African American Alone`, Income = `Median Household Income (In 2017 Inflation Adjusted Dollars)`, 
+    Limited_Access = `Persons with Limited Access to Healthy Foods`, 
+    Obese = `Obese Persons (20 Years and Over)`, Free_Lunch = `Children Eligible for Free Lunch (Persons &lt; 18 Years)`)</code></pre>
+<p>Before doing anything else, I edited the column names in ‘Final’ to make them shorter and easier to recall. The column ‘County’ stayed the same, ‘White Alone’ changed to ‘White’, ‘Black or African American Alone’ changed to ‘Black’, <code>Median Household Income (In 2017 Inflation Adjusted Dollars)</code> changed to ‘Income’, ‘Persons with Limited Access to Healthy Foods<code>changed to 'Limited_Access', and</code>Children Eligible for Free Lunch (Persons &lt; 18 Years)` changed to ’Free_Lunch’.</p>
+<pre class="r"><code>Final %&gt;% filter(Obese == max(Obese))</code></pre>
+<pre><code>## # A tibble: 1 x 7
+##   County                 White Black Income Limited_Access Obese Free_Lunch
+##   &lt;chr&gt;                  &lt;dbl&gt; &lt;dbl&gt;  &lt;dbl&gt;          &lt;dbl&gt; &lt;dbl&gt;      &lt;dbl&gt;
+## 1 Angelina County, Texas 0.781 0.148  46472          0.132 0.336      0.575</code></pre>
+<pre class="r"><code>Final %&gt;% arrange(Obese)</code></pre>
+<pre><code>## # A tibble: 53 x 7
+##    County                 White Black Income Limited_Access Obese Free_Lunch
+##    &lt;chr&gt;                  &lt;dbl&gt; &lt;dbl&gt;  &lt;dbl&gt;          &lt;dbl&gt; &lt;dbl&gt;      &lt;dbl&gt;
+##  1 Collin County, Texas   0.711 0.093  90124          0.021 0.25       0.205
+##  2 Brazos County, Texas   0.748 0.104  43907          0.181 0.26       0.514
+##  3 Bandera County, Texas  0.923 0.01   56413          0.047 0.275      0.424
+##  4 Brown County, Texas    0.917 0.04   43062          0.156 0.275      0.472
+##  5 Brewster County, Texas 0.921 0.001  38906          0.105 0.276      0.403
+##  6 Austin County, Texas   0.806 0.09   62614          0.037 0.278      0.449
+##  7 Atascosa County, Texas 0.923 0.007  55194          0.059 0.279      0.571
+##  8 Aransas County, Texas  0.878 0.016  44601          0.168 0.28       0.513
+##  9 Bexar County, Texas    0.794 0.075  53999          0.116 0.282      0.568
+## 10 Caldwell County, Texas 0.778 0.066  51346          0.076 0.284      0.6  
+## # … with 43 more rows</code></pre>
+<pre class="r"><code>Final %&gt;% select(County, Limited_Access, Obese, everything())</code></pre>
+<pre><code>## # A tibble: 53 x 7
+##    County                  Limited_Access Obese White Black Income Free_Lunch
+##    &lt;chr&gt;                            &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt; &lt;dbl&gt;  &lt;dbl&gt;      &lt;dbl&gt;
+##  1 Anderson County, Texas           0.105 0.334 0.733 0.209  42313      0.527
+##  2 Andrews County, Texas            0.138 0.288 0.918 0.021  70753      0.333
+##  3 Angelina County, Texas           0.132 0.336 0.781 0.148  46472      0.575
+##  4 Aransas County, Texas            0.168 0.28  0.878 0.016  44601      0.513
+##  5 Archer County, Texas             0.057 0.299 0.945 0.012  63192      0.252
+##  6 Armstrong County, Texas          0.294 0.305 0.944 0.02   68750      0.27 
+##  7 Atascosa County, Texas           0.059 0.279 0.923 0.007  55194      0.571
+##  8 Austin County, Texas             0.037 0.278 0.806 0.09   62614      0.449
+##  9 Bailey County, Texas             0.041 0.297 0.857 0.016  43523      0.724
+## 10 Bandera County, Texas            0.047 0.275 0.923 0.01   56413      0.424
+## # … with 43 more rows</code></pre>
+<pre class="r"><code>mean(Final$Income)</code></pre>
+<pre><code>## [1] 51520.66</code></pre>
+<pre class="r"><code>Final_categorical &lt;- Final %&gt;% mutate(Relativity_of_Income = case_when(Income &lt; 
+    51520.66 ~ &quot;Low&quot;, Income &gt; 51520.66 ~ &quot;High&quot;))
+Final_categorical %&gt;% group_by(Relativity_of_Income) %&gt;% summarize(n_Counties = n_distinct(County), 
+    Mean_White_Population = mean(White), Mean_Black_Population = mean(Black), 
+    Mean_Household_Income = mean(Income), Mean_Persons_with_Limited_Access_to_Healthy_Foods = mean(Limited_Access), 
+    Mean_Obese_Persons = mean(Obese), Mean_Children_Eligible_for_Free_Lunch = mean(Free_Lunch))</code></pre>
+<pre><code>## # A tibble: 2 x 8
+##   Relativity_of_I… n_Counties Mean_White_Popu… Mean_Black_Popu… Mean_Household_…
+##   &lt;chr&gt;                 &lt;int&gt;            &lt;dbl&gt;            &lt;dbl&gt;            &lt;dbl&gt;
+## 1 High                     22            0.826           0.0513           63874.
+## 2 Low                      31            0.851           0.0672           42754.
+## # … with 3 more variables:
+## #   Mean_Persons_with_Limited_Access_to_Healthy_Foods &lt;dbl&gt;,
+## #   Mean_Obese_Persons &lt;dbl&gt;, Mean_Children_Eligible_for_Free_Lunch &lt;dbl&gt;</code></pre>
+<pre class="r"><code>Final_categorical %&gt;% summarize(n_Counties = n_distinct(County), 
+    Mean_White_Population = mean(White), Mean_Black_Population = mean(Black), 
+    Mean_Household_Income = mean(Income), Mean_Persons_with_Limited_Access_to_Healthy_Foods = mean(Limited_Access), 
+    Mean_Obese_Persons = mean(Obese), Mean_Children_Eligible_for_Free_Lunch = mean(Free_Lunch))</code></pre>
+<pre><code>## # A tibble: 1 x 7
+##   n_Counties Mean_White_Popu… Mean_Black_Popu… Mean_Household_… Mean_Persons_wi…
+##        &lt;int&gt;            &lt;dbl&gt;            &lt;dbl&gt;            &lt;dbl&gt;            &lt;dbl&gt;
+## 1         53            0.841           0.0606           51521.            0.105
+## # … with 2 more variables: Mean_Obese_Persons &lt;dbl&gt;,
+## #   Mean_Children_Eligible_for_Free_Lunch &lt;dbl&gt;</code></pre>
+<p>I calculated a multitude of summary statistics for each of my numeric variables both overall and after grouping by my categorical variable- ‘Relativity of Income’. I used filter() to find the county with the greatest proportion of obese persons- Angelina. I used arrange() to find the county with the lowest proportion of obese persons- Collin. After determining the average of the median household incomes using mean(), I was able to use mutate() to create a categorical variable distinguishing “low” and “high” income (called ‘relativity of income’, either above or below the average income). I called the dataset that includes ‘relativity of income’ ‘Final_cateogrical’. I then used summarize() to determine the mean of each variable. I did this prior to grouping by ‘relativity of income’ and after (using group_by()).</p>
+<pre class="r"><code>Final %&gt;% select_if(is.numeric) %&gt;% cor %&gt;% as.data.frame %&gt;% 
+    rownames_to_column %&gt;% pivot_longer(-1) %&gt;% ggplot(aes(rowname, 
+    name, fill = value)) + geom_tile() + geom_text(aes(label = round(value, 
+    2))) + xlab(&quot;&quot;) + ylab(&quot;&quot;) + theme(axis.text.x = element_text(size = rel(0.9), 
+    angle = 20), axis.text.y = element_text(size = rel(0.9)))</code></pre>
+<p><img src="/project1_files/figure-html/unnamed-chunk-3-1.png" width="672" style="display: block; margin: auto;" /></p>
+<p>This correlation heat map shows the correlations between the six different numeric variables. After looking at the map, I realized the strongest correlation was between limited access to healthy food and children eligible for free lunch. The correlation between ‘Obese’ and ‘Black’ was greater than the correlation between ‘Obese’ and ‘White.’ The correlation between ‘Free_Lunch’ and ‘Black’ was greater than the correlation between ‘Free_Lunch’ and ‘White’. The correlation between ‘Limited_Access’ and ‘White’ was greater than the correlation between ‘Limited_Access’ and ‘Black’. The correlation between ‘Income’ and ‘White’ was almost identical to the correlation between ‘Income’ and ‘Black’.</p>
+<pre class="r"><code>ggplot(Final_categorical, aes(x = County)) + geom_bar(aes(y = Limited_Access, 
+    fill = Relativity_of_Income), stat = &quot;summary&quot;, fun.y = &quot;mean&quot;) + 
+    theme(legend.position = &quot;Right&quot;) + theme(axis.text.x = element_text(angle = 60, 
+    hjust = 1), legend.position = &quot;right&quot;) + ggtitle(&quot;Access to Healthy Food vs. Relativity of Income&quot;)</code></pre>
+<p><img src="/project1_files/figure-html/unnamed-chunk-4-1.png" width="672" style="display: block; margin: auto;" /></p>
+<p>In this graph, I was interested in looking at the correlation between persons with limited access to healthy foods and level of income, either ‘High’ (above the average) or ‘Low’ (below the average). I was very confident that the more limited to healthy foods a county was, the more likely it was to be classified as a “Low” income county. I was surprised to learn that the correlation wasn’t as strong as I imagined and that the counties that were 3rd and 4th most limited to healthy foods were classified as “High” income counties. Although most of the “Low” income counties had more limited access to healthy foods than the rest, the correlation does not seem to be strong.</p>
+<pre class="r"><code>ggplot(Final_categorical, aes(Income, Obese, color = White)) + 
+    geom_point() + theme(axis.text.x = element_text(angle = 60, 
+    hjust = 1), legend.position = &quot;left&quot;) + scale_color_gradient(low = &quot;yellow&quot;, 
+    high = &quot;red&quot;) + ggtitle(&quot;Income vs. Obesity vs. White Proportion&quot;) + 
+    scale_x_continuous(limits = c(0, 1e+05))</code></pre>
+<p><img src="/project1_files/figure-html/unnamed-chunk-5-1.png" width="672" style="display: block; margin: auto;" /></p>
+<p>In this graph, I was interested in looking at the correlation between median household income and the proportion of obese persons (over the age of 20) and how the proportion of the county that is white affects that correlation. I thought that the higher the household income, the smaller the proportion of obese persons would be. To a certain extent, that was proven to be true. The county with the highest income also has the lowest obesity rate. With the addition of more counties, I think the correlation would have been more distinct. I was not sure whether the ‘White’ measure would have an effect on the correlation. The graph does not seem to show a distinct effect, and there is a range of white proportions (colors) across the graph. The color that indicates 0.7 ‘White’ is displayed at both the highest income/lowest obesity rate and at one of the lowest incomes/highest obesity rates.</p>
+<pre class="r"><code>library(cluster)
+final_dat &lt;- Final %&gt;% select(-County)
+sil_width &lt;- vector()
+for (i in 2:10) {
+    pam_fit &lt;- pam(final_dat, k = i)
+    sil_width[i] &lt;- pam_fit$silinfo$avg.width
+}
+ggplot() + geom_line(aes(x = 1:10, y = sil_width)) + scale_x_continuous(name = &quot;k&quot;, 
+    breaks = 1:10)</code></pre>
+<p><img src="/project1_files/figure-html/unnamed-chunk-6-1.png" width="672" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>pam1 &lt;- final_dat %&gt;% pam(2)
+pam1</code></pre>
+<pre><code>## Medoids:
+##      ID White Black Income Limited_Access Obese Free_Lunch
+## [1,] 21 0.748 0.104  43907          0.181 0.260      0.514
+## [2,]  5 0.945 0.012  63192          0.057 0.299      0.252
+## Clustering vector:
+##  [1] 1 2 1 1 2 2 2 2 1 2 2 1 1 1 2 2 2 1 1 2 1 1 1 1 1 1 2 1 2 1 1 1 2 1 1 2 1 1
+## [39] 1 1 1 1 2 1 1 2 1 1 2 1 1 2 1
+## Objective function:
+##    build     swap 
+## 5847.396 5399.302 
+## 
+## Available components:
+##  [1] &quot;medoids&quot;    &quot;id.med&quot;     &quot;clustering&quot; &quot;objective&quot;  &quot;isolation&quot; 
+##  [6] &quot;clusinfo&quot;   &quot;silinfo&quot;    &quot;diss&quot;       &quot;call&quot;       &quot;data&quot;</code></pre>
+<pre class="r"><code>library(GGally)
+final_dat %&gt;% mutate(cluster = as.factor(pam1$clustering)) %&gt;% 
+    ggpairs(columns = 2:6, aes(color = cluster))</code></pre>
+<p><img src="/project1_files/figure-html/unnamed-chunk-6-2.png" width="672" style="display: block; margin: auto;" /></p>
+<pre class="r"><code>plot(pam1, which = 2)</code></pre>
+<p><img src="/project1_files/figure-html/unnamed-chunk-6-3.png" width="672" style="display: block; margin: auto;" /></p>
+<p>I ran k-means/PAM cluster analysis on all the numeric variables in my dataset. First, I removed the ‘County’ variable from my dataset using select(). I chose k-means over WSS to determine the number of clusters because silhouette width indexes show how cohesive and separated clusters are. I determined I needed 2 clusters after creating a ggplot and seeing where the line was the tallest. The ggpairs() shows the pairwise combinations of all five variables. Lastly, I plotted the two silhouettes to visualize the clusters. The average silhouette wideth of 0.61 indicates that a reasonable structure has been found.</p>

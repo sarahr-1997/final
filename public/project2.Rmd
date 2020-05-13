@@ -1,0 +1,250 @@
+---
+title: 'Project 2: Modeling, Testing, and Predicting'
+author: "Sarah Roytek (ssr894)"
+date: ''
+output:
+  pdf_document:
+    toc: yes
+  html_document:
+    toc: yes
+    toc_float:
+      collapsed: no
+      smooth_scroll: yes
+---
+
+```{r setup, include=FALSE}
+library(knitr)
+hook_output = knit_hooks$get('output')
+knit_hooks$set(output = function(x, options) {
+  # this hook is used only when the linewidth option is not NULL
+  if (!is.null(n <- options$linewidth)) {
+    x = knitr:::split_lines(x)
+    # any lines wider than n should be wrapped
+    if (any(nchar(x) > n)) x = strwrap(x, width = n)
+    x = paste(x, collapse = '\n')
+  }
+  hook_output(x, options)
+})
+
+knitr::opts_chunk$set(echo = TRUE, eval = TRUE,fig.align="center",warning=FALSE,message=FALSE,fig.width=8, fig.height=5, linewidth=60)
+options(tibble.width = 100,width = 100)
+library(tidyverse)
+```
+
+```{R}
+library(carData)
+Arrests <- Arrests
+head(Arrests)
+```
+My dataset is called 'Arrests' and is from the 'carData' package. It features data on police treatment of individuals arrested in Toronto for simple possession of small quantities of marijuana. The dataset has 5,226 observations of 8 different variables. The 'released' variable tells whether the arrestee was released with a summons; it is a binary variable with levels 'No' and 'Yes'. The 'colour' variable is the arrestee's race; it is a binary variable with levels 'Black' and 'White'. The 'year' variable is numeric and ranges from 1997 to 2002, indicating the year of the arrest. The 'age' variable is numeric and indicates the age of the arrestee (in years). The 'sex' variable is the arrestee's gender; it is a binary variable with levels 'Female' and 'Male'. The 'employed' variable tells whether the arrestee was employed at the time of arrest; it is a binary variable with levels 'No' and 'Yes'. The 'citizen' variable tells whether the arrestee was a citizen at the time of arrest; it is a binary variable with levels 'No' and 'Yes'. The 'checks' variable is numeric and is the number of police databases (of previous arrests, previous convictions, parole status, etc.- 6 in all) on which the arrestee's name appeared.
+
+```{R}
+#assumptions
+ggplot(Arrests, aes(x = age, y = checks)) +
+  geom_point(alpha = .5) + geom_density_2d(h=2) + facet_wrap(~sex)
+library(car)
+leveneTest(age + checks ~ sex, Arrests, center=mean)
+
+#MANOVA
+man1<-manova(cbind(age, checks)~sex, data=Arrests)
+summary(man1)
+#ANOVAs
+summary.aov(man1)
+#Post-hoc t-test
+Arrests%>%group_by(sex)%>%summarize(mean(age),mean(checks))
+pairwise.t.test(Arrests$checks, Arrests$sex, p.adj = "none")
+
+.05/4
+1-(.95^4)
+```
+I used MANOVA to determine the effect of sex ('Female' or' Male') on two dependent variables (age at the time of arrest and number of checks differed by sex). 
+
+There are many MANOVA assumptions, but first I started with the assumption of multivariate normality. I made bivariate density plots of response variables for each gender. Neither of the bivariate density plots were circular or ovoid, meaning that assumption was not met. Next, I checked the assumption of homogeneity of variances using Levene's test. The assumption wasn't met since the p-value was less than .05. Although the assumptions were not met, I continued with the MANOVA test.
+
+The null hypothesis for my MANOVA was that for both dependent variables, means for each gender are equal. My alternative hypothesis was that for at least one DV, at least one gender mean is different. The overall MANOVA was significant (p-value: 6.235e-14) meaning that significant differences were found among the genders for at least one of the DV. I performed follow-up one-way ANOVAs for each variable to see which were significant, and I ran a post-hoc t-test. I used the Bonferroni method for controlling Type 1 error rates for multiple comparisons. Since I ran 1 MANOVA, 2 ANOVAs, and 1 t-test (4 tests total) the value I used to test for significance was 0.0125 instead of 0.05. I calculated the probability of at least one type 1 error to be 0.1855 (if unadjusted). From performing the ANOVAs, I determined that age (p-value: 0.407) is not significant but checks is (p-value: 6.421e-15). For checks, gender means differ. The post-hoc t-test was to check if 'checks' really differed for sex. The test was significant (p-value: 6.4e-15) so 'male' and 'female' significantly differ for 'charges'. 
+
+```{R}
+ggplot(Arrests,aes(checks,fill=released))+geom_histogram(bins=6.5)+facet_wrap(~released)
+Arrests %>% group_by(released) %>% summarize(means=mean(checks))%>%summarize(`mean_diff:`=diff(means))
+
+rand_dist<-vector()
+for(i in 1:5000){
+new<-data.frame(checks=sample(Arrests$checks),Released=Arrests$released)
+rand_dist[i]<-mean(new[new$Released=="Yes",]$checks)-
+              mean(new[new$Released=="No",]$checks)}
+hist(rand_dist,main="",ylab=""); abline(v = -1.021024,col="red")
+mean(rand_dist>1.021024 | rand_dist< -1.021024)
+```
+I performed a randomization test on my data. The null hypothesis was that number of checks is the same for arrestees released and arrestees not released. The alternative hypothesis was that number of checks is different for arrestees released and arrestees not released. I created a plot visualizing the null distribution and the test statistic. The P-value calculated corresponds to the probability of observing a mean difference as extreme as the one observed in the original data under this "randomization distribution”. I computed the two-tailed p-value to be 0, and I rejected the null hypothesis. The number of checks is different for arrestees released and arrestees not released. 
+
+
+```{R}
+library(lmtest)
+library(car)
+agecen <-Arrests$age - mean(Arrests$age, na.rm=T)
+fit<-lm(checks~colour*agecen,data=Arrests)
+summary(fit)
+Arrests%>%ggplot(aes(age,checks))+geom_point()+geom_smooth(method = 'lm',se=F)
+
+#assumptions
+scatterplot(checks ~ age | colour, data=Arrests,
+   xlab="Age of Arrestee", ylab="Number of Checks",
+   main="Scatter Plot")
+resids<-fit$residuals
+fitvals<-fit$fitted.values
+ggplot()+geom_point(aes(fitvals,resids))+geom_hline(yintercept=0, color='red')
+bptest(checks~colour*agecen,data=Arrests)
+ks.test(resids, "pnorm", mean=0, sd(resids))
+library(sandwich)
+coeftest(fit, vcov = vcovHC(fit))[,1:4]
+```
+
+I built a linear regression model predicting the number of checks from arrestee color and age. I made sure to mean-center the age variable. I also plotted the regression using ggplot(), but I did not include the 'colour' variable. 
+
+The average number of checks when no variables are considered is 2.091. For arrestees with an average age, white individuals have an average/predicted number of checks that is 0.597 less than black individuals, difference is significant (b = -0.597, t = -12.305, p = < 2e-16).  For every 1 unit increase in age, number of checks increase by 0.0089 (b = 0.0089, t = 1.824, p = 0.068276). The interaction term is also the difference in slopes. The slope for Whites and Blacks are significantly different (b = 0.019, t = 3.368, p = 0.000764); it is 0.019 greater for whites. 
+ 
+Next, I checked assumptions of linearity, normality, and homoskedasticity. I made a scatter plot using ggplot() to test linearity. The fit lines showed some curviness, meaning the assumption of linearity was not met. I made a ggplot of the residuals against the fitted values to check homoskedasticity. The graph looked very weird and proved that there was not equal variance of the residuals along the regression line. To confirm that homoskedasticity was not upheld, I ran a Breuch-Pagan test and rejected (p: 0.041) the null hypothesis (homoskedasticity). The normality assumption was also not met. I did a Kolmogorov-Smirnow (KS) test and rejected (p: < 2.2e-16) the null hypothesis, that the residuals are normally distributed. 
+
+I recomputed regression results with robust standard errors via coeftest(…, vcov=vcovHC(…)). None of the coefficient estimates changed. The std. errors and t-values slightly changed. All of the p-values got smaller which means that the results increased in significancy.  The proportion of variation in the response variable explained by my overall model was 0.047.
+
+
+```{R}
+#bootstrapped SE (resampling rows)
+samp_distn<-replicate(5000, {
+  boot_dat <- sample_frac(Arrests, replace=T) 
+  fit <- lm(checks~colour*agecen, data=boot_dat) 
+  coef(fit) #save coefs
+})
+samp_distn %>% t %>% as.data.frame %>% summarize_all(sd)
+
+#bootstrapped SE (resampling residuals)
+fit<-lm(checks~colour*agecen,data=Arrests)
+resids<-fit$residuals 
+fitted<-fit$fitted.values
+resid_resamp<-replicate(5000,{
+    new_resids<-sample(resids,replace=TRUE) 
+    Arrests$new_y<-fitted+new_resids 
+    fit<-lm(new_y~colour*agecen,data=Arrests) 
+    coef(fit) 
+})
+resid_resamp%>%t%>%as.data.frame%>%summarize_all(sd)
+
+coeftest(fit)[,1:2]
+coeftest(fit, vcov=vcovHC(fit))[,1:2]
+```
+I reran the same regression model and computed bootstrapped standard errors. I calculated two different sets of boostrapped standard errors, one by resampled rows and one by resampled residuals. All of the robust SEs were greater than the original SEs minus the 'agecen' SE. The bootstrapped standard errors calculated by resampling residuals were all less than the boostrapped standard errors calculated by resampling rows. The bootstrapped standard errors calculated by resampling residuals were very close to the original SEs. 
+
+
+```{R}
+data<-Arrests%>%mutate(y=ifelse(released=="Yes",1,0))
+fit2<-glm(y~colour+citizen,data=data,family=binomial(link="logit"))
+coeftest(fit2)
+exp(0.658731)
+exp(0.636550)
+exp(0.636550+0.658731)
+exp(0.574182)
+exp(0.574182+0.658731)
+exp(3.294003)
+
+#confusion matrix
+prob<-predict(fit2,type="response")
+pred<-ifelse(prob>.5,1,0)
+table(predict=pred,truth=data$y)%>%addmargins
+(0+4334)/5226 # accuracy
+(4334)/5226 #tnr
+0/0 #tpr
+892/892 #ppv
+
+#DENSITY PLOT
+data$logit<-predict(fit2,type="link")
+data%>%ggplot()+geom_density(aes(logit,color=released,fill=released), alpha=.4)+
+  theme(legend.position=c(.85,.85))+geom_vline(xintercept=0)+xlab("logit (log-odds)")+
+  geom_rug(aes(logit,color=released))+
+  geom_text(x=-5,y=.07,label="TN = 431")+
+  geom_text(x=-1.75,y=.008,label="FN = 19")+
+  geom_text(x=1,y=.006,label="FP = 13")+
+  geom_text(x=5,y=.04,label="TP = 220")
+#ROC CURVE AND AUC
+library(plotROC)
+ROCplot2<-ggplot(data,aes(d=y,m=prob))+geom_roc()
+ROCplot2
+calc_auc(ROCplot2)
+#AUC
+class_diag <- function(probs,truth){
+  #CONFUSION MATRIX: CALCULATE ACCURACY, TPR, TNR, PPV
+  tab<-table(factor(probs>.5,levels=c("FALSE","TRUE")),truth)
+  acc=sum(diag(tab))/sum(tab)
+  sens=tab[2,2]/colSums(tab)[2]
+  spec=tab[1,1]/colSums(tab)[1]
+  ppv=tab[2,2]/rowSums(tab)[2]
+  if(is.numeric(truth)==FALSE & is.logical(truth)==FALSE) truth<-as.numeric(truth)-1
+    #CALCULATE EXACT AUC
+  ord<-order(probs, decreasing=TRUE)
+  probs <- probs[ord]; truth <- truth[ord]
+  TPR=cumsum(truth)/max(1,sum(truth))
+  FPR=cumsum(!truth)/max(1,sum(!truth))
+  dup<-c(probs[-1]>=probs[-length(probs)], FALSE)
+  TPR<-c(0,TPR[!dup],1); FPR<-c(0,FPR[!dup],1)
+  n <- length(TPR)
+  auc<- sum( ((TPR[-1]+TPR[-n])/2) * (FPR[-1]-FPR[-n]) )
+  data.frame(acc,sens,spec,ppv,auc)
+}
+class_diag(prob, data$y)
+
+set.seed(1234)
+k=10 #choose number of folds
+data<-data[sample(nrow(data)),] #randomly order rows
+folds<-cut(seq(1:nrow(data)),breaks=k,labels=F) #create folds
+diags<-NULL
+for(i in 1:k){
+  ## Create training and test sets
+  train<-data[folds!=i,]
+  test<-data[folds==i,]
+  truth<-test$y ## Truth labels for fold i
+  ## Train model on training set (all but fold i)
+  fit<-glm(y~colour+citizen,data=train,family="binomial")
+  ## Test model on test set (fold i)
+  probs<-predict(fit,newdata = test,type="response")
+  ## Get diagnostics for fold i
+  diags<-rbind(diags,class_diag(probs,truth))
+}
+summarize_all(diags,mean)
+```
+I built a logistic regression model predicting whether the arrestee was released after arrest from the arrestee’s color and citizenship. 
+
+Being white (colour=‘White’) and being a citizen (citizen=‘Yes’) increases log-odds of being released (makes it more likely). The characteristic of being white multiplies odds by 1.890. Being a citizen multiplies the odds by 1.776. The odds of being released if the arrestee is black and not a citizen is 1.932. The odds of being released if the arrestee is white is 3.652. The odds of being released if the arrestee is a citizen is 3.431. 
+
+Next, I computed a confusion matrix for the logistic regression. The matrix showed only predicted positive (i.e., no predicted probabilities under .5).  The accuracy was 0.829, the specificity (TNR) was 0.829, the sensitivity (TPR) can’t be calculated (since the denominator would be 0), and the precision (PPV) is  1.
+
+Using ggplot(), I plotted the density of log-odds by ‘released’ (the binary outcome variable). Logit > 0 means we predict ‘released’. This means that all arrestees are predicted to be ‘released’ from the variables in the logistic regression. This plot shows how different the predicted and the observed outcomes are. I generated a ROC curve using ggplot() and calculated AUC to be 0.596. The AUC is bad. The trade-off between sensitivity and specificity is extreme!
+
+Finally, I performed a 10-fold CV. The reported accuracy was 0.829, sensitivity was 1, specificity was 0, ppt was 0.829, and acc was 0.596.  The performance (AUC) out-of-sample was very similar to the performance in sample (calculated previously). 
+
+
+```{R}
+library(glmnet)
+y<-as.matrix(Arrests$released)
+x<-model.matrix(released~.,data=Arrests)[,-1]
+head(x)
+x <- scale(x)
+cv<-cv.glmnet(x,y,family="binomial")
+lasso<-glmnet(x,y,family="binomial",lambda=cv$lambda.1se)
+coef(lasso)
+
+set.seed(1234)
+k=10
+data <- data %>% sample_frac #put rows of dataset in random order
+folds <- ntile(1:nrow(data),n=10) #create fold labels
+diags<-NULL
+for(i in 1:k){
+  train <- data[folds!=i,] #create training set (all but fold i)
+  test <- data[folds==i,] #create test set (just fold i)
+  truth <- test$released #save truth labels from fold i
+  fit <- glm(released~colour+employed+citizen+checks,
+             data=train, family="binomial")
+  probs <- predict(fit, newdata=test, type="response")
+  diags<-rbind(diags,class_diag(probs,truth))
+}
+diags%>%summarize_all(mean)
+```
+Colour, employment, citizenship, and checks are the most predictive variables for being released after arrest. I performed a 10-fold CV using a logistic regression model and these variables. The response variable ('regression') is binary so I compared the model's out-of-sample accuracy to that of my logistic regression above. The AUC for this CV is 0.724 which is much better than the AUC from above. This CV performance is the best yet for predicting released. The original model must have been overfitting. 
