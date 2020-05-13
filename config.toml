@@ -21,6 +21,8 @@ theme = "hugo-sustain"
 
 [params.social]
   Email         = "sarahroytek1997@gmail.com"
+  Instagram     = "sarah_roytek"
+  Facebook      = "Sarah Roytek"
 
 
 ## Main Menu
@@ -34,8 +36,3 @@ theme = "hugo-sustain"
   identifier = "Projects"
   weight = 200
   url = "/Projects/"
-[[menu.main]]
-  name = "resume"
-  identifier = "resume"
-  weight = 300
-  url = "/resume/"
