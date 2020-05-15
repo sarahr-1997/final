@@ -1,5 +1,5 @@
 ---
-title: Python
+title: Switching between Python and R
 author: Sarah Roytek
 date: '2020-05-13'
 slug: python
@@ -7,23 +7,18 @@ categories: []
 tags: []
 description: ''
 ---
+Reticulate is a super helpful tool if you need to go between Python and R. Say you want to load a data set in python but manipulate it with dplr functions in RStudio; reticulate is the tool for you! Another time when reticulate could be helpful is if you are trying to graph data (maybe using ggplot()) that you previously mantipulated with python. 
+
 
 ```{r setup, include=FALSE}
 library(reticulate)
 library(dplyr)
+x <- "If you need to go"
 ```
 
 ```{python}
-Produce_prices = {
-'honeycrisp apple': 1.25,
-'mango': 1.50,
-'strawberry': '$3/lb',
-'avocado': 2.00,
-}
+y = "between r and python, use reticulate."
+print (r.x,y)
 ```
 
 
-```{python}
-Produce_prices['honeycrisp apple']+Produce_prices['mango']+Produce_prices['avocado']
-x = 4.75
-```
