@@ -51,12 +51,23 @@
 </nav>
 
       
-        <section id="projects">
-  <div class="container">
-    <h3></h3>
-    <div class="panel panel-default">
-      <div class="panel-body">
-      
+      <div class="container">
+        <div class="blog-post">
+          <h3>
+            <strong><a href="/project2/">Project 2: Modeling, Testing, and Predicting</a></strong>
+          </h3>
+        </div>
+        <div class="blog-title">
+          <h4>
+          January 1, 0001
+            &nbsp;&nbsp;
+            
+          </h4>
+        </div>
+        <div class="panel panel-default">
+          <div class="panel-body">
+            <div class="blogpost">
+              
 
 
 <pre class="r"><code>library(carData)
@@ -221,7 +232,7 @@ samp_distn&lt;-replicate(5000, {
 })
 samp_distn %&gt;% t %&gt;% as.data.frame %&gt;% summarize_all(sd)</code></pre>
 <pre><code>##   (Intercept) colourWhite      agecen colourWhite:agecen
-## 1  0.04234288  0.04864478 0.005149145        0.005882777</code></pre>
+## 1  0.04184914  0.04778908 0.005129902        0.005877801</code></pre>
 <pre class="r"><code>#bootstrapped SE (resampling residuals)
 fit&lt;-lm(checks~colour*agecen,data=Arrests)
 resids&lt;-fit$residuals 
@@ -234,7 +245,7 @@ resid_resamp&lt;-replicate(5000,{
 })
 resid_resamp%&gt;%t%&gt;%as.data.frame%&gt;%summarize_all(sd)</code></pre>
 <pre><code>##   (Intercept) colourWhite      agecen colourWhite:agecen
-## 1  0.04228685  0.04826152 0.004820014        0.005690344</code></pre>
+## 1  0.04264072  0.04897945 0.004913309        0.005680307</code></pre>
 <pre class="r"><code>coeftest(fit)[,1:2]</code></pre>
 <pre><code>##                        Estimate  Std. Error
 ## (Intercept)         2.090680559 0.042152099
@@ -400,11 +411,35 @@ diags%&gt;%summarize_all(mean)</code></pre>
 ## 1 0.8279748 0.9856489 0.0613653 0.8361354 0.7226567</code></pre>
 <p>Colour, employment, citizenship, and checks are the most predictive variables for being released after arrest. I performed a 10-fold CV using a logistic regression model and these variables. The response variable (‘regression’) is binary so I compared the model’s out-of-sample accuracy to that of my logistic regression above. The AUC for this CV is 0.724 which is much better than the AUC from above. This CV performance is the best yet for predicting released. The original model must have been overfitting.</p>
 
-      </div>
-    </div>
-  </div>
-</section>
+              <hr>
+              <div class="related-posts">
+                <h5>Related Posts</h5>
+                
+              </div>
+            </div>
+          </div>
+          <hr>
+        <div class="disqus">
+  <div id="disqus_thread"></div>
+  <script type="text/javascript">
 
+    (function() {
+      
+      
+      if (window.location.hostname == "localhost")
+        return;
+
+      var disqus_shortname = '';
+      var dsq = document.createElement('script'); dsq.type = 'text/javascript'; dsq.async = true;
+      dsq.src = '//' + disqus_shortname + '.disqus.com/embed.js';
+      (document.getElementsByTagName('head')[0] || document.getElementsByTagName('body')[0]).appendChild(dsq);
+    })();
+  </script>
+  <noscript>Please enable JavaScript to view the <a href="http://disqus.com/?ref_noscript">comments powered by Disqus.</a></noscript>
+  <a href="http://disqus.com/" class="dsq-brlink">comments powered by <span class="logo-disqus">Disqus</span></a>
+</div>
+        </div>
+      </div>
       
     </div>
 
