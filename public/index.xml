@@ -17,8 +17,8 @@
       <pubDate>Wed, 13 May 2020 00:00:00 +0000</pubDate>
       
       <guid>/blog/python/</guid>
-      <description>Reticulate is a super helpful tool if you need to go between Python and R. Say you want to load a data set in python but manipulate it with dplr functions in RStudio; reticulate is the tool for you! Another time when reticulate could be helpful is if you are trying to graph data (maybe using ggplot()) that you previously mantipulated with python.
-library(reticulate) x &amp;lt;- &amp;quot;If you need to go&amp;quot; y = &amp;quot;between r and python, use reticulate.</description>
+      <description>This is a picture from the National Geographic museum in Washington, D.C.. It’s a picture of a wall in the museum that is covered in a ton of different magazine covers. I love the variety of colors and topics.
+Reticulate is a super helpful tool if you need to go between Python and R. Say you want to load a data set in python but manipulate it with dplr functions in RStudio; reticulate is the tool for you!</description>
     </item>
     
     <item>
