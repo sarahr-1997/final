@@ -8,7 +8,7 @@ tags: []
 description: ''
 ---
 
-![](/blog/2020-05-13-python_files/IMG_6695.jpeg){width=400px height=200px}
+<img src="/Desktop/website/static/img/pic.jpeg">
 
 This is a picture from the National Geographic museum in Washington, D.C.. It's a picture of a wall in the museum that is covered in a ton of different magazine covers. I love the variety of colors and topics. 
 
