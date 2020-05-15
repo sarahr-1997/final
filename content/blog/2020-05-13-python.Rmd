@@ -7,6 +7,7 @@ categories: []
 tags: []
 description: ''
 ---
+![](/blog/2020-05-13-python_files/pic.jpeg)
 
 ![](/blog/2020-05-13-python_files/IMG_6695.jpeg)
 
