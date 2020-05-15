@@ -10,7 +10,7 @@ description: ''
 Reticulate is a super helpful tool if you need to go between Python and R. Say you want to load a data set in python but manipulate it with dplr functions in RStudio; reticulate is the tool for you! Another time when reticulate could be helpful is if you are trying to graph data (maybe using ggplot()) that you previously mantipulated with python. 
 
 
-```{r setup, include=FALSE}
+```{r}
 library(reticulate)
 library(dplyr)
 x <- "If you need to go"

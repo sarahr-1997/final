@@ -18,7 +18,7 @@
       
       <guid>/blog/python/</guid>
       <description>Reticulate is a super helpful tool if you need to go between Python and R. Say you want to load a data set in python but manipulate it with dplr functions in RStudio; reticulate is the tool for you! Another time when reticulate could be helpful is if you are trying to graph data (maybe using ggplot()) that you previously mantipulated with python.
-y = &amp;quot;between r and python, use reticulate.</description>
+library(reticulate) library(dplyr) ## ## Attaching package: &amp;#39;dplyr&amp;#39; ## The following objects are masked from &amp;#39;package:stats&amp;#39;: ## ## filter, lag ## The following objects are masked from &amp;#39;package:base&amp;#39;: ## ## intersect, setdiff, setequal, union x &amp;lt;- &amp;quot;If you need to go&amp;quot; y = &amp;quot;between r and python, use reticulate.</description>
     </item>
     
     <item>
