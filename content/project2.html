@@ -10,6 +10,7 @@ output:
     toc_float:
       collapsed: no
       smooth_scroll: yes
+showpagemeta: false
 ---
 
 
@@ -176,7 +177,7 @@ samp_distn&lt;-replicate(5000, {
 })
 samp_distn %&gt;% t %&gt;% as.data.frame %&gt;% summarize_all(sd)</code></pre>
 <pre><code>##   (Intercept) colourWhite      agecen colourWhite:agecen
-## 1  0.04295999  0.04821957 0.005021294         0.00583733</code></pre>
+## 1  0.04234288  0.04864478 0.005149145        0.005882777</code></pre>
 <pre class="r"><code>#bootstrapped SE (resampling residuals)
 fit&lt;-lm(checks~colour*agecen,data=Arrests)
 resids&lt;-fit$residuals 
@@ -189,7 +190,7 @@ resid_resamp&lt;-replicate(5000,{
 })
 resid_resamp%&gt;%t%&gt;%as.data.frame%&gt;%summarize_all(sd)</code></pre>
 <pre><code>##   (Intercept) colourWhite      agecen colourWhite:agecen
-## 1   0.0423209  0.04860895 0.004865428        0.005641604</code></pre>
+## 1  0.04228685  0.04826152 0.004820014        0.005690344</code></pre>
 <pre class="r"><code>coeftest(fit)[,1:2]</code></pre>
 <pre><code>##                        Estimate  Std. Error
 ## (Intercept)         2.090680559 0.042152099
