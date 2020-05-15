@@ -12,7 +12,6 @@ Reticulate is a super helpful tool if you need to go between Python and R. Say y
 
 ```{r}
 library(reticulate)
-library(dplyr)
 x <- "If you need to go"
 ```
 
